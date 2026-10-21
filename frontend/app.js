@@ -1,5 +1,4 @@
-const BASE = "http://localhost:3000/api"; 
-
+const BASE = "http://localhost:3000/api";
 async function checkHealth(){
     try{
         const res = await fetch(`${BASE}/health`);
@@ -14,25 +13,64 @@ async function checkHealth(){
     }
 }
 
-async function postData(endpoint, payload = {}) {
-    try{
-        const res = await fetch(`${BASE}/${endpoint}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
+// async function postData(endpoint, payload = {}) {
+//     try{
+//         const res = await fetch(`${BASE}/${endpoint}`, {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json"
+//             },
+//             body: JSON.stringify(payload)
+//         });
 
-        data = await res.json();
+//         data = await res.json();
 
-        if(!res.ok)
-            throw new Error(data.error || data.message || `Request failed (${res.status})`);
-        return data;
-    } catch (err) {
-        console.error(`Error on POST / ${endpoint}:`, err.message);
-        throw err;
+//         if(!res.ok)
+//             throw new Error(data.error || data.message || `Request failed (${res.status})`);
+//         return data;
+//     } catch (err) {
+//         console.error(`Error on POST / ${endpoint}:`, err.message);
+//         throw err;
+//     }
+// }
+
+async function sendRequest(endpoint, method = "GET", payload = null){
+    const options = {
+        method,
+        headers: {"Content-Type": "applications/json"}
+    };
+    if(payload && method !== "GET")
+        options.body = JSON.stringify(payload);
+
+    res = await fetch (`${BASE}/${endpoint}`, options);
+    data = await res.json();
+
+    if(!res.ok)
+        throw new Error(data.error || data.message || `Request failed (${res.status})`)
+    return data;
+}
+
+function renderTable(rows) {
+    tableHeadRow.empty();
+    tableBody.empty();
+
+    if(!rows || rows.length === 0){
+        tableBody.append("<tr><td colspan = `100%`>No data returned</td></tr>");
+        return;
     }
+
+    headers = Object.keys(rows[0]);
+    headers.forEach((h) => {
+        tableHeadRow.append($("<th>").text(h));
+    });
+
+    rows.forEach((row) => {
+        tr = $("<tr>");
+        headers.forEach((h) => {
+            tr.append($("<td>").text(row[h] !== null ? row[h] : "NULL"));
+        });
+        tableBody.append(tr);
+    });
 }
 
 const dataTypes = {
@@ -151,22 +189,6 @@ const dataTypes = {
 };
 
 const manFieldSchemas = {
-    // state: {
-    //     label: "State Code",
-    //     attrs:{
-    //         type: "text",
-    //         name: "state",
-    //         maxlength: "2",
-    //         minlength: "2",
-    //         pattern: "[A-Za-z]{2}",
-    //         placeholder: "TX",
-    //         required: true
-    //     },
-    //     onInput: function(){
-    //         $(this).val($(this).val().replace(/[^a-zA-Z]/g, '').toUpperCase());
-    //     }
-    // }
-
     //Decimals
     taxRate: {label: "Tax Rate", ...dataTypes.DECIMAL_5_4("0.0000", "1.0000")},
     balance: {label: "Balance", ...dataTypes.DECIMAL_12_2("-9999999999.99")},
@@ -266,26 +288,13 @@ function manEnterCase(){
         wrapper.append(label, field);
         container.append(wrapper);
     });
-    // schema = manFieldSchemas[selectedKey];
-    // inputId = `input_${selectedKey}`;
-
-    // wrapper = $("<div>", { class : "form-group"});
-    // label = $("<label>", {for: inputId, text: schema.label});
-    // input = $("<input>", {id: inputId, ...schema.attrs});
-
-    // if(typeof schema.onInput === "function")
-    //     input.on("input", schema.onInput);
-    // if(typeof schema.onKeydown === "function")
-    //     input.on("keydown", schema.onKeydown);
-
-    // wrapper.append(label, input);
-    // container.append(wrapper);
-    // input.trigger("focus");
     container.find("input, select").first().trigger("focus");
 }
 
-$(function(){
-    outputLog = $("#outputLog");
+$(function(){ 
+    const outputLog = $("#outputLog");
+    const tableHeadRow = $("#tableHeadRow");
+    const tableBody = $("#tableBody");
 
     $("#healthCheck").on("click", async () => {
         outputLog.text("Checking server health...");
@@ -294,6 +303,27 @@ $(function(){
             outputLog.text(JSON.stringify(result, null, 2));
         } catch (err){
             outputLog.text(`Server Unreachable: ${err.message}`);
+        }
+    });
+
+
+    $("#initTables").on("click", async () => {
+        outputLog.text("Initializaing tables...");
+        try{
+            const res = await sendRequest("db/init", "POST");
+            outputLog.text(JSON.stringify(res, null, 2));
+        } catch (err){
+            outputLog.text(`Init Error: ${err.message}`);
+        }
+    });
+
+    $("#randomInit").on("click", async () => {
+        outputLog.text("Seeding baseline data...");
+        try{
+            const res = await sendRequest("db/seed", "POST");
+            outputLog.test(JSON.stringify(res, null, 2));
+        } catch (err) {
+            outputLog.text(`Seed Error: ${err.message}`);
         }
     });
 

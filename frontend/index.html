@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supermarket GUI</title>
+    <title>Supermarket Control Panel</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src ="app.js" defer></script>
@@ -11,21 +11,13 @@
 <body>
     <h1>Supermarket Functionality</h1>
     <fieldset class = "stackedFieldset">
-        <legend>Connection Status</legend>
+        <legend>Connection Status & Database Control</legend>
 
         <label for = "healthCheck">Check Backend Connection</label>
         <button id = "healthCheck" name = "healthCheck">Check Connection</button>
 
-        <section>
-            <h3>Status / Output:</h3>
-            <pre id = "outputLog">Awaiting action...</pre>
-        </section>       
-
-
-    </fieldset>
-
-    <fieldset class = "stackedFieldset">
-        <legend>Table Functionality</legend>
+        <label for = "initTables">Initialize Tables</label>
+        <button id = "initTables">Initialize Tables</button>
 
         <label for = "randomInit">Use Random Data</label>
         <button id = "randomInit">Initialize Data</button>
@@ -45,6 +37,61 @@
         </select>
         
         <div id = tableContainer></div>
+
+        <label for = "dropTables">Drop Tables</label>
+        <button id = "dropTables">Drop Tables</button>
+
+        <section>
+            <h3>Status / Output:</h3>
+            <pre id = "outputLog">Awaiting action...</pre>
+        </section>       
+
+
+    </fieldset>
+
+    <br>
+
+    <fieldset class = "stackedFieldset">
+        <legend>OLTP Simulation</legend>
+
+        <label for = "simStoreId">Store ID:</label>
+        <input type = "number" id = "simStoreId" value = "1" min = "1">
+
+        <label for = "simCustId">Customer ID (optional):</label>
+        <input type = "number" id = "simCustId" placeholder = "Leave blank for cash">
+
+        <label for = "simAcctId">Bank Account ID (optional):</label>
+        <input type = "number" id = "simAcctId", placeholder = "Required if card">
+
+        <button id = "btnRunSim">Run Checkout Simulation</button>
+    </fieldset>
+
+    <br>
+
+    <fieldset class = "stackedFieldset">
+        <legend>Analytical Reports</legend>
+
+        <button id = "btnReportStoreSales">Store Sales Summary</button>
+        <button id = "btnReportTopProducts">Top Selling Products</button>
+        <button id = "btnReportInventoryLevels">Low Stock By Aisle</button>
+    </fieldset>
+
+    <br>
+
+    <fieldset>
+        <legend>Query Results</legend>
+
+        <table id = "results" cellpadding = "6" cellspacing = "0">
+            <thead>
+                <tr id = "tableHeadRow">
+
+                </tr>
+            </thead>
+
+            <tbody id = "tableBody">
+
+            </tbody>
+        </table>
     </fieldset>
 </body>
 </html>
