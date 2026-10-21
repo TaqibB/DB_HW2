@@ -13,26 +13,19 @@ async function checkHealth(){
     }
 }
 
-// async function postData(endpoint, payload = {}) {
-//     try{
-//         const res = await fetch(`${BASE}/${endpoint}`, {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json"
-//             },
-//             body: JSON.stringify(payload)
-//         });
-
-//         data = await res.json();
-
-//         if(!res.ok)
-//             throw new Error(data.error || data.message || `Request failed (${res.status})`);
-//         return data;
-//     } catch (err) {
-//         console.error(`Error on POST / ${endpoint}:`, err.message);
-//         throw err;
-//     }
-// }
+async function checkDB(){
+    try{
+        const res = await fetch(`${BASE}/db-test`);
+        if(!res.ok)
+            throw new Error(`Database error: ${res.status}`);
+        data = await res.json();
+        console.log("Health Check Response:", data);
+        return data;
+    } catch (err) {
+        console.error("Health check failed:", err.message);
+        throw err;
+    }
+}
 
 async function sendRequest(endpoint, method = "GET", payload = null){
     const options = {
@@ -310,6 +303,16 @@ $(function(){
             outputLog.text(JSON.stringify(result, null, 2));
         } catch (err){
             outputLog.text(`Server Unreachable: ${err.message}`);
+        }
+    });
+
+    $("#dbCheck").on("click", async () => {
+        outputLog.text("Checking database connection...");
+        try{
+            const result = await checkDB();
+            outputLog.text(JSON.stringify(result, null, 2));
+        } catch (err) {
+            outputLog.text(`Database Unreachable: ${err.message}`);
         }
     });
 
