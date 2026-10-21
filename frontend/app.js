@@ -13,26 +13,19 @@ async function checkHealth(){
     }
 }
 
-// async function postData(endpoint, payload = {}) {
-//     try{
-//         const res = await fetch(`${BASE}/${endpoint}`, {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json"
-//             },
-//             body: JSON.stringify(payload)
-//         });
-
-//         data = await res.json();
-
-//         if(!res.ok)
-//             throw new Error(data.error || data.message || `Request failed (${res.status})`);
-//         return data;
-//     } catch (err) {
-//         console.error(`Error on POST / ${endpoint}:`, err.message);
-//         throw err;
-//     }
-// }
+async function checkDB(){
+    try{
+        const res = await fetch(`${BASE}/db-test`);
+        if(!res.ok)
+            throw new Error(`Database error: ${res.status}`);
+        data = await res.json();
+        console.log("Health Check Response:", data);
+        return data;
+    } catch (err) {
+        console.error("Health check failed:", err.message);
+        throw err;
+    }
+}
 
 async function sendRequest(endpoint, method = "GET", payload = null){
     const options = {
@@ -249,12 +242,17 @@ const tableSchemas = {
 function manEnterCase(){
     selectedTable = $(this).val();
     container = $("#tableContainer");
+    submitBtn = $("#submitCustomCase");
 
     container.empty();
 
-    if(!selectedTable || !tableSchemas[selectedTable])
+    if(!selectedTable || !tableSchemas[selectedTable]){
+        submitBtn.hide();
         return;
+    }
     
+    submitBtn.show();
+
     reqCols = tableSchemas[selectedTable];
 
     reqCols.forEach((colKey) => {
@@ -296,6 +294,8 @@ $(function(){
     const tableHeadRow = $("#tableHeadRow");
     const tableBody = $("#tableBody");
 
+    //--Connection Status & DB Control
+
     $("#healthCheck").on("click", async () => {
         outputLog.text("Checking server health...");
         try{
@@ -303,6 +303,16 @@ $(function(){
             outputLog.text(JSON.stringify(result, null, 2));
         } catch (err){
             outputLog.text(`Server Unreachable: ${err.message}`);
+        }
+    });
+
+    $("#dbCheck").on("click", async () => {
+        outputLog.text("Checking database connection...");
+        try{
+            const result = await checkDB();
+            outputLog.text(JSON.stringify(result, null, 2));
+        } catch (err) {
+            outputLog.text(`Database Unreachable: ${err.message}`);
         }
     });
 
@@ -327,6 +337,118 @@ $(function(){
         }
     });
 
-
     $("#tableSelect").on("change", manEnterCase);
+
+    $("#submitCustomCase").on("click", async () => {
+        selectedTable = $("#tableSelect").val();
+        
+        if(!selectedTable || !tableSchemas[selectedTable]){
+            outputLog.text("Error: Select a valid table first");
+            return;
+        }
+
+        reqCols = tableSchemas[selectedTable];
+        payload = {};
+        validationError = null;
+
+        reqCols.forEach((colKey) => {
+            if(validationError)
+                return;
+
+            col = manFieldSchemas[colKey];
+            inputId = `#field_${selectedTable}_${colKey}`;
+            el = $(inputId);
+            val = el.val();
+
+            if(col.attrs && col.attrs.required && (val === "" || val === null)){
+                validationError = `Field "${col.label || colKey}" is required`;
+                el.trigger("focus");
+                return;
+            }
+
+            if(val === "" || val === null){
+                payload[colKey] = null;
+            } else if (col.type === "INT"){
+                payload[colKey] = parseInt(val, 10);
+            } else if(col.type === "DECIMAL") {
+                payload[colKey] = parseFloat(val);
+            } else if(col.type === "BOOLEAN"){
+                payload[colKey] = val === "true" || val === true;
+            } else{
+                payload[colKey] = val;
+            }
+        });
+
+        if(validationError){
+            outputLog.text(`Validation Failed: ${validationError}`);
+            return;
+        }
+
+        outputLog.text(`Submitting new row to "${selectedTable}"...`);
+
+        try{
+            const res = await sendRequest(`tables/${selectedTable}`, "POST", payload);
+            outputLog.text(`Row Inserted Successfully:\n${JSON.stringify(res, null, 2)}`);
+        } catch (err) {
+            outputLog.text(`Insert Failed: ${err.message}`);
+        }
+
+
+    });
+    
+
+    $("#dropTables").on("click", async () => {
+        outputLog.text("Dropping tables...");
+        try{
+            const res = await sendRequest("db/drop", "POST");
+            outputLog.text(JSON.stringify(res, null, 2));
+            tableHeadRow.empty();
+            tableBody.empty();
+        } catch (err){
+            outputLog.text(`Drop Error: ${err.message}`);
+        }
+    });
+
+    //--OLTP Simulation
+
+    $("#btnRunSim").on("click", async () => {
+        storeIdVal = $("#simStoreId").val();
+        custIdVal = $("#simCustId").val();
+        accountIdVal = $("simAcctId").val();
+
+        payload = {
+            store_id: storeIdVal ? parseInt(storeIdVal, 10) : 1,
+            customer_id: custIdVal ? parseInt(cusIdVal, 10) : null,
+            account_id: accountIdVal ? parseInt(accountIdVal, 10) : null
+        };
+
+        try{
+            const res = await sendRequest("simulation/checkout", "POST", payload);
+            outputLog.text(`Checkout Successful:\n${JSON.stringify(res, null, 2)}`);
+        } catch (err){
+            outputLog.text(`Checkout Failed (OLTP Contrainst/Error):\n${err.message}`);
+        }
+    });
+
+    //--Analytical Report Views
+
+    async function report(endpoint) {
+        outputLog.text(`Fetching report: ${endpoint}...`);
+        try{
+            const res = await sendRequest(`reports/${endpoint}`, "GET");
+            outputLog.text(`Successful Query. Retrieved ${res.data ? res.data.length : 0} rows.`);
+            renderTable(res.data);
+        } catch (err){
+            outputLog.text(`Report Error: ${err.message}`);
+            tableHeadRow.empty();
+            tableBody.empty();
+        }
+    }
+
+    $("#btnReportStoreSales").on("click", () => report("store-sales"));
+    $("#btnReportTopProducts").on("click", () => report("top-products"));
+    $("#btnReportInventoryLevels").on("click", () => report("low-stock"));
+
+
+
 });

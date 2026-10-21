@@ -10,11 +10,24 @@
 </head>
 <body>
     <h1>Supermarket Functionality</h1>
+    
+    <br>
+
+    <section>
+        <h2>Current Status / Output</h2>
+        <pre id = "outputLog">Awaiting action...</pre>
+    </section>
+
+    <br>
+
     <fieldset class = "stackedFieldset">
         <legend>Connection Status & Database Control</legend>
 
         <label for = "healthCheck">Check Backend Connection</label>
         <button id = "healthCheck" name = "healthCheck">Check Connection</button>
+
+        <label for = "dbCheck">Check Database Connection</label>
+        <button id = "dbCheck" name = "dbCheck">Check Connection</button>
 
         <label for = "initTables">Initialize Tables</label>
         <button id = "initTables">Initialize Tables</button>
@@ -38,14 +51,10 @@
         
         <div id = tableContainer></div>
 
+        <button type = "submit" id = "submitCustomCase" class = "hidden">Submit Custom Testcase</button>
+
         <label for = "dropTables">Drop Tables</label>
         <button id = "dropTables">Drop Tables</button>
-
-        <section>
-            <h3>Status / Output:</h3>
-            <pre id = "outputLog">Awaiting action...</pre>
-        </section>       
-
 
     </fieldset>
 
