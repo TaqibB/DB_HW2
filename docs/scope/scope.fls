@@ -129,6 +129,8 @@ INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/amssy
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/amssymb.sty
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/amsfonts.sty
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/float/float.sty
+INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/float/float.sty
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 INPUT ./scope.aux
@@ -156,9 +158,14 @@ INPUT ./er-diagram_png.png
 INPUT ./er-diagram_png.png
 INPUT ./er-diagram_png.png
 INPUT ./er-diagram_png.png
+INPUT ./er-diagram2.png
+INPUT ./er-diagram2.png
+INPUT ./er-diagram2.png
+INPUT ./er-diagram2.png
+INPUT ./er-diagram2.png
+INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/fonts/tfm/public/cm/cmr12.tfm
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
-INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/fonts/tfm/public/cm/cmr8.tfm
 INPUT c:/Users/three/AppData/Roaming/TinyTeX/texmf-dist/fonts/tfm/public/cm/cmr6.tfm
