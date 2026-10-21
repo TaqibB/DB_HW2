@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Control Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src ="app.js" defer></script>
+</head>
+<body>
+    <h1>Supermarket Functionality</h1>
+    <fieldset class = "stackedFieldset">
+        <legend>Connection Status & Database Control</legend>
+
+        <label for = "healthCheck">Check Backend Connection</label>
+        <button id = "healthCheck" name = "healthCheck">Check Connection</button>
+
+        <label for = "initTables">Initialize Tables</label>
+        <button id = "initTables">Initialize Tables</button>
+
+        <label for = "randomInit">Use Random Data</label>
+        <button id = "randomInit">Initialize Data</button>
+        
+        <label for = "tableSelect">Or Manually Enter Testcases</label>
+        <select name = "tableSelect" id = "tableSelect">
+            <option value = "">Select a Table</option>
+            <option value = "stateTax">State Tax</option>
+            <option value = "store">Store</option>
+            <option value = "aisle">Aisle</option>
+            <option value = "inventory">Inventory</option>
+            <option value = "purchaseItem">Purchase Item</option>
+            <option value = "product">Product</option>
+            <option value = "purchase">Purchase</option>
+            <option value = "customer">Customer</option>
+            <option value = "bankAccount">Bank Account</option>
+        </select>
+        
+        <div id = tableContainer></div>
+
+        <label for = "dropTables">Drop Tables</label>
+        <button id = "dropTables">Drop Tables</button>
+
+        <section>
+            <h3>Status / Output:</h3>
+            <pre id = "outputLog">Awaiting action...</pre>
+        </section>       
+
+
+    </fieldset>
+
+    <br>
+
+    <fieldset class = "stackedFieldset">
+        <legend>OLTP Simulation</legend>
+
+        <label for = "simStoreId">Store ID:</label>
+        <input type = "number" id = "simStoreId" value = "1" min = "1">
+
+        <label for = "simCustId">Customer ID (optional):</label>
+        <input type = "number" id = "simCustId" placeholder = "Leave blank for cash">
+
+        <label for = "simAcctId">Bank Account ID (optional):</label>
+        <input type = "number" id = "simAcctId", placeholder = "Required if card">
+
+        <button id = "btnRunSim">Run Checkout Simulation</button>
+    </fieldset>
+
+    <br>
+
+    <fieldset class = "stackedFieldset">
+        <legend>Analytical Reports</legend>
+
+        <button id = "btnReportStoreSales">Store Sales Summary</button>
+        <button id = "btnReportTopProducts">Top Selling Products</button>
+        <button id = "btnReportInventoryLevels">Low Stock By Aisle</button>
+    </fieldset>
+
+    <br>
+
+    <fieldset>
+        <legend>Query Results</legend>
+
+        <table id = "results" cellpadding = "6" cellspacing = "0">
+            <thead>
+                <tr id = "tableHeadRow">
+
+                </tr>
+            </thead>
+
+            <tbody id = "tableBody">
+
+            </tbody>
+        </table>
+    </fieldset>
+</body>
+</html>
