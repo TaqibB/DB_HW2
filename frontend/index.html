@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket GUI</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src ="app.js" defer></script>
+</head>
+<body>
+    <h1>Supermarket Functionality</h1>
+    <!-- <label>New item:</label> <input type="text" id="newItemText" autofocus>
+    <button id="addBtn">Add</button> -->
+    <!-- <h2>Table</h2> -->
+    <fieldset class = "stackedFieldset">
+        <legend>Table Functionality</legend>
+        <button id = "randomInit">Use Random Data</button>
+        <!-- <p>Or Manually Enter Testcases</p> -->
+        <label for = "tableSelect">Or Manually Enter Testcases</label>
+        <select name = "tableSelect" id = "tableSelect">
+            <option value = "">Select a Table</option>
+            <option value = "stateTax">State Tax</option>
+            <option value = "store">Store</option>
+            <option value = "aisle">Aisle</option>
+            <option value = "inventory">Inventory</option>
+            <option value = "purchaseItem">Purchase Item</option>
+            <option value = "product">Product</option>
+            <option value = "purchase">Purchase</option>
+            <option value = "customer">Customer</option>
+            <option value = "bankAccount">Bank Account</option>
+        </select>
+        
+        <div id = tableContainer></div>
+    </fieldset>
+</body>
+</html>
