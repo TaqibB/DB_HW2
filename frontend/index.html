@@ -10,13 +10,26 @@
 </head>
 <body>
     <h1>Supermarket Functionality</h1>
-    <!-- <label>New item:</label> <input type="text" id="newItemText" autofocus>
-    <button id="addBtn">Add</button> -->
-    <!-- <h2>Table</h2> -->
+    <fieldset class = "stackedFieldset">
+        <legend>Connection Status</legend>
+
+        <label for = "healthCheck">Check Backend Connection</label>
+        <button id = "healthCheck" name = "healthCheck">Check Connection</button>
+
+        <section>
+            <h3>Status / Output:</h3>
+            <pre id = "outputLog">Awaiting action...</pre>
+        </section>       
+
+
+    </fieldset>
+
     <fieldset class = "stackedFieldset">
         <legend>Table Functionality</legend>
-        <button id = "randomInit">Use Random Data</button>
-        <!-- <p>Or Manually Enter Testcases</p> -->
+
+        <label for = "randomInit">Use Random Data</label>
+        <button id = "randomInit">Initialize Data</button>
+        
         <label for = "tableSelect">Or Manually Enter Testcases</label>
         <select name = "tableSelect" id = "tableSelect">
             <option value = "">Select a Table</option>

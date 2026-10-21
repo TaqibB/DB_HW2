@@ -1,4 +1,39 @@
+const BASE = "http://localhost:3000/api"; 
 
+async function checkHealth(){
+    try{
+        const res = await fetch(`${BASE}/health`);
+        if(!res.ok)
+            throw new Error(`HTTP error: ${res.status}`);
+        data = await res.json();
+        console.log("Health Check Response:", data);
+        return data;
+    } catch (err) {
+        console.error("Health check failed:", err.message);
+        throw err;
+    }
+}
+
+async function postData(endpoint, payload = {}) {
+    try{
+        const res = await fetch(`${BASE}/${endpoint}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        data = await res.json();
+
+        if(!res.ok)
+            throw new Error(data.error || data.message || `Request failed (${res.status})`);
+        return data;
+    } catch (err) {
+        console.error(`Error on POST / ${endpoint}:`, err.message);
+        throw err;
+    }
+}
 
 const dataTypes = {
     VARCHAR: (max = 100, required = true) => ({
@@ -250,5 +285,18 @@ function manEnterCase(){
 }
 
 $(function(){
+    outputLog = $("#outputLog");
+
+    $("#healthCheck").on("click", async () => {
+        outputLog.text("Checking server health...");
+        try{
+            const result = await checkHealth();
+            outputLog.text(JSON.stringify(result, null, 2));
+        } catch (err){
+            outputLog.text(`Server Unreachable: ${err.message}`);
+        }
+    });
+
+
     $("#tableSelect").on("change", manEnterCase);
 });
