@@ -32,6 +32,7 @@ async function sendRequest(endpoint, method = "GET", payload = null){
         method,
         headers: {"Content-Type": "applications/json"}
     };
+
     if(payload && method !== "GET")
         options.body = JSON.stringify(payload);
 
@@ -43,7 +44,7 @@ async function sendRequest(endpoint, method = "GET", payload = null){
     return data;
 }
 
-function renderTable(rows) {
+function renderTable(tableHeadRow, tableBody, rows) {
     tableHeadRow.empty();
     tableBody.empty();
 
@@ -232,69 +233,27 @@ const tableSchemas = {
     bankAccount: ["accountId", "customerId", "balance"]
 };
 
-// $("#tableSelect").on("change", function(){
-//     selectedKey = $(this).val();
-//     container = $("#tableContainer");
-
-//     console.log(`changed key with ${selectedKey}`);
-// });
-
-function manEnterCase(){
-    selectedTable = $(this).val();
-    container = $("#tableContainer");
-    submitBtn = $("#submitCustomCase");
-
-    container.empty();
-
-    if(!selectedTable || !tableSchemas[selectedTable]){
-        submitBtn.hide();
-        return;
-    }
-    
-    submitBtn.show();
-
-    reqCols = tableSchemas[selectedTable];
-
-    reqCols.forEach((colKey) => {
-        col = manFieldSchemas[colKey];
-        
-        if(!col)
-            return;
-
-        inputId = `field_${selectedTable}_${colKey}`;
-
-        wrapper = $("<div>", { class : "form-group"});
-        label = $("<label>", {for: inputId, text: col.label});
-        // input = $("<input>", {id: inputId, ...col.attrs});
-        let field;
-
-        if(col.isSelect){
-            field = $("<select>", {id: inputId, name: colKey, ...col.attrs});
-            col.options.forEach((opt) => {
-                field.append($("<option>", {value: opt.value, text: opt.label}));
-            });
-        } else {
-            field = $("<input>", {id: inputId, name: colKey, ...col.attrs});
-
-            if(typeof col.onInput === "function")
-                field.on("input", col.onInput);
-            if(typeof col.onKeydown === "function")
-                field.on("keydown", col.onKeydown);
-        }
-
-
-        wrapper.append(label, field);
-        container.append(wrapper);
-    });
-    container.find("input, select").first().trigger("focus");
-}
 
 $(function(){ 
     const outputLog = $("#outputLog");
     const tableHeadRow = $("#tableHeadRow");
     const tableBody = $("#tableBody");
 
+    $(".tabBtn").on("click", function () {
+        targetTabId = $(this).data("tab");
+
+        $(".tabBtn").removeClass("active");
+        $(".tabContent").removeClass("active");
+
+        $(this).addClass("active");
+        $(`#${targetTabId}`).addClass("active");
+
+        if(targetTabId === "tabHistory")
+            loadTransactionHistory();
+    });
+
     //--Connection Status & DB Control
+
 
     $("#healthCheck").on("click", async () => {
         outputLog.text("Checking server health...");
@@ -318,7 +277,19 @@ $(function(){
 
 
     $("#initTables").on("click", async () => {
+
+        const confirmed = window.confirm(
+            "WARNING: Reinitializing will reset current schema and overwrite any active transaction states\n\nContinue with initialization?"
+        )
+
+        if(!confirmed){
+            outputLog.text("Operation aborted: Initialization cancelled");
+            return;
+        }
+
+        
         outputLog.text("Initializaing tables...");
+
         try{
             const res = await sendRequest("db/init", "POST");
             outputLog.text(JSON.stringify(res, null, 2));
@@ -337,70 +308,53 @@ $(function(){
         }
     });
 
-    $("#tableSelect").on("change", manEnterCase);
+    $("#viewTable").on("change", async () => {
+        selectedTable = $("#viewTable").val();
 
-    $("#submitCustomCase").on("click", async () => {
-        selectedTable = $("#tableSelect").val();
-        
+        tableHeadRow.empty();
+        tableBody.empty();
+
         if(!selectedTable || !tableSchemas[selectedTable]){
-            outputLog.text("Error: Select a valid table first");
             return;
         }
 
-        reqCols = tableSchemas[selectedTable];
-        payload = {};
-        validationError = null;
+        let endpoint = "";
 
-        reqCols.forEach((colKey) => {
-            if(validationError)
-                return;
-
-            col = manFieldSchemas[colKey];
-            inputId = `#field_${selectedTable}_${colKey}`;
-            el = $(inputId);
-            val = el.val();
-
-            if(col.attrs && col.attrs.required && (val === "" || val === null)){
-                validationError = `Field "${col.label || colKey}" is required`;
-                el.trigger("focus");
-                return;
-            }
-
-            if(val === "" || val === null){
-                payload[colKey] = null;
-            } else if (col.type === "INT"){
-                payload[colKey] = parseInt(val, 10);
-            } else if(col.type === "DECIMAL") {
-                payload[colKey] = parseFloat(val);
-            } else if(col.type === "BOOLEAN"){
-                payload[colKey] = val === "true" || val === true;
-            } else{
-                payload[colKey] = val;
-            }
-        });
-
-        if(validationError){
-            outputLog.text(`Validation Failed: ${validationError}`);
-            return;
-        }
-
-        outputLog.text(`Submitting new row to "${selectedTable}"...`);
+        if(selectedTable === "stateTax")
+            endpoint = "state_tax";
+        else if(selectedTable === "purchaseItem")
+            endpoint = "purchase_item";
+        else if(selectedTable === "bankAccount")
+            endpoint = "bank_account";
+        else
+            endpoint = selectedTable;
 
         try{
-            const res = await sendRequest(`tables/${selectedTable}`, "POST", payload);
-            outputLog.text(`Row Inserted Successfully:\n${JSON.stringify(res, null, 2)}`);
-        } catch (err) {
-            outputLog.text(`Insert Failed: ${err.message}`);
+            const res = await sendRequest(`tables/${endpoint}`, "GET");
+            renderTable($("#inspectHeadRow"), $("#inspectBody"), res.data);
+        } catch (err){
+            outputLog.text(`Report Error: ${err.message}`);
+            tableHeadRow.empty();
+            tableBody.empty();
         }
-
-
     });
     
 
     $("#dropTables").on("click", async () => {
+
+        const confirmed = window.confirm(
+            "DANGER: This will clear all tables and wipe all data!\n\nAre you sure you want to proceed?"
+        )
+
+        if(!confirmed){
+            outputLog.text("Operation aborted: Clear Tables cancelled by user.");
+            return;
+        }
+
         outputLog.text("Dropping tables...");
+
         try{
-            const res = await sendRequest("db/drop", "POST");
+            const res = await sendRequest("db/reset", "POST");
             outputLog.text(JSON.stringify(res, null, 2));
             tableHeadRow.empty();
             tableBody.empty();
@@ -412,6 +366,10 @@ $(function(){
     //--OLTP Simulation
 
     $("#btnRunSim").on("click", async () => {
+        feed = $("#simLogContainer");
+        feed.empty();
+        feed.append("<p>Beginning Simulation...</p>");
+
         storeIdVal = $("#simStoreId").val();
         custIdVal = $("#simCustId").val();
         accountIdVal = $("simAcctId").val();
@@ -424,24 +382,54 @@ $(function(){
 
         try{
             const res = await sendRequest("simulation/checkout", "POST", payload);
-            outputLog.text(`Checkout Successful:\n${JSON.stringify(res, null, 2)}`);
+            feed.empty();
+
+            if(!res.simulations || res.simulations.length === 0){
+                feed.append("<p>No transactions generated</p>");
+                return;
+            }
+
+            res.simulations.forEach((sim, idx) => {
+                isErr = !sim.success;
+                card = $("<div>", {class: `simCard ${isErr ? "error" : ""}`}); 
+                card.append(`<h4>Tx #${idx + 1}: Customer ${sim.customer_id} (${sim.payment_method.toUpperCase()})</h4>`);
+
+                if(isErr)
+                    card.append(`<p style="color:red; margin:0;"><strong>ABORTED/ROLLED BACK:</strong> ${sim.error}</p>`);
+                else{
+                    const $ul =$("<ul>");
+                    sim.items.forEach((it) => {
+                        $ul.append(`<li>${it.sku} - ${it.name} | Qty: ${it.quantity} @ $${it.unit_price} (Tax: $${it.tax_amount})</li>`);
+                    });
+                    card.append($ul);
+                    card.append(`<div><strong>Subtotal:</strong> $${sim.subtotal} | <strong>Total Paid:</strong> $${sim.total}</div>`);
+                    if (sim.account_id) {
+                        card.append(`<div class="muted">Charged to Bank Account ID: ${sim.account_id}</div>`);
+                    }
+                }
+                feed.append(card);
+            });
         } catch (err){
-            outputLog.text(`Checkout Failed (OLTP Contrainst/Error):\n${err.message}`);
+            feed.html(`<p style="color:red;">Simulation Engine Failed: ${err.message}</p>`);
         }
     });
 
     //--Analytical Report Views
 
     async function report(endpoint) {
-        outputLog.text(`Fetching report: ${endpoint}...`);
+
+        head = $("#tableHeadRow");
+        body = $("#tableBody");
+        body.html("<tr><td colspan='100%'>Querying analytical view...</td></tr>");
+
         try{
             const res = await sendRequest(`reports/${endpoint}`, "GET");
             outputLog.text(`Successful Query. Retrieved ${res.data ? res.data.length : 0} rows.`);
-            renderTable(res.data);
+            renderTable(head, body, res.data);
         } catch (err){
-            outputLog.text(`Report Error: ${err.message}`);
-            tableHeadRow.empty();
-            tableBody.empty();
+            head.empty();
+            body.html(`<tr><td colspan='100%' style="color:red;">Report Failed: ${err.message}</td></tr>`);
+            
         }
     }
 
@@ -449,6 +437,35 @@ $(function(){
     $("#btnReportTopProducts").on("click", () => report("top-products"));
     $("#btnReportInventoryLevels").on("click", () => report("low-stock"));
 
+    async function loadTransactionHistory () {
+        body = $("#historyBody");
+        body.html("<tr><td colspan='7'>Loading latest 50 transactions...</td></tr>");
 
+        try{
+            const res = await sendRequest("transactions/history");
+            body.empty();
+
+            if(!res.data || res.data.length === 0){
+                body.append("<tr><td colspan='7'>No transaction records available.</td></tr>");
+                return;
+            }
+
+            res.data.forEach((tx) => {
+                $tr = $("<tr>");
+                $tr.append($("<td>").text(tx.purchase_id));
+                $tr.append($("<td>").text(tx.store_id));
+                $tr.append($("<td>").text(tx.customer_id !== null ? tx.customer_id : "N/A (Guest)"));
+                $tr.append($("<td>").text(new Date(tx.purchase_date).toLocaleString()));
+                $tr.append($("<td>").text(tx.payment_method));
+                $tr.append($("<td>").text(tx.account_id !== null ? tx.account_id : "N/A"));
+                $tr.append($("<td>").text(`$${parseFloat(tx.total).toFixed(2)}`));
+                body.append($tr);
+            });
+        } catch (err) {
+            body.html(`<tr><td colspan='7' style="color:red;">Failed to retrieve transaction history: ${err.message}</td></tr>`);
+        }
+    }
+
+    $("#btnRefreshHistory").on("click", loadTransactionHistory);
 
 });
