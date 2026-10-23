@@ -3,24 +3,22 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
-// Only allow specific tables
-// apparently this needs to be done to avoid SQL injection or something idk.
+// Map frontend names to actual PostgreSQL tables
 const allowedTables = {
-    stores: "public.store",
-    aisles: "public.aisle",
-    products: "public.product",
-    inventory: "public.inventory",
-    customers: "public.customer",
-    purchases: "public.purchase",
-    purchase_items: "public.purchase_item",
     state_tax: "public.state_tax",
-    bank_accounts: "bank.bank_account"
+    store: "public.store",
+    aisle: "public.aisle",
+    inventory: "public.inventory",
+    customer: "public.customer",
+    product: "public.product",
+    purchase_item: "public.purchase_item",
+    purchase: "public.purchase",
+    bank_account: "bank.bank_account"
 };
 
 // GET /api/tables/:selectedTable
 router.get("/:selectedTable", async (req, res) => {
-    const selectedTable = req.params.selectedTable;
-    const tableName = allowedTables[selectedTable];
+    const tableName = allowedTables[req.params.selectedTable];
 
     if (!tableName) {
         return res.status(400).json({
@@ -36,9 +34,9 @@ router.get("/:selectedTable", async (req, res) => {
 
         res.json({
             success: true,
-            table: selectedTable,
+            table: req.params.selectedTable,
             count: result.rows.length,
-            rows: result.rows
+            data: result.rows
         });
 
     } catch (error) {
@@ -46,7 +44,7 @@ router.get("/:selectedTable", async (req, res) => {
 
         res.status(500).json({
             success: false,
-            message: "Unable to retrieve table records"
+            message: "Unable to retrieve table"
         });
     }
 });
