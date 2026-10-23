@@ -30,7 +30,7 @@ async function checkDB(){
 async function sendRequest(endpoint, method = "GET", payload = null){
     const options = {
         method,
-        headers: {"Content-Type": "applications/json"}
+        headers: {"Content-Type": "application/json"}
     };
 
     if(payload && method !== "GET")
@@ -302,7 +302,7 @@ $(function(){
         outputLog.text("Seeding baseline data...");
         try{
             const res = await sendRequest("db/seed", "POST");
-            outputLog.test(JSON.stringify(res, null, 2));
+            outputLog.text(JSON.stringify(res, null, 2));
         } catch (err) {
             outputLog.text(`Seed Error: ${err.message}`);
         }
@@ -372,11 +372,11 @@ $(function(){
 
         storeIdVal = $("#simStoreId").val();
         custIdVal = $("#simCustId").val();
-        accountIdVal = $("simAcctId").val();
+        accountIdVal = $("#simAcctId").val();
 
         payload = {
             store_id: storeIdVal ? parseInt(storeIdVal, 10) : 1,
-            customer_id: custIdVal ? parseInt(cusIdVal, 10) : null,
+            customer_id: custIdVal ? parseInt(custIdVal, 10) : null,
             account_id: accountIdVal ? parseInt(accountIdVal, 10) : null
         };
 
