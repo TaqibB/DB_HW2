@@ -10,7 +10,7 @@ router.post("/test", async (req, res) => {
         const result = await processCheckout({
             storeId: 1,
             customerId: 1,
-            accountId: 1,
+            accountId: req.body?.account_id ?? 1,
             paymentMethod: "CARD",
             items: [
                 { sku: "1003", quantity: 1 },
