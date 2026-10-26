@@ -4,74 +4,131 @@ const router = express.Router();
 
 const fs = require("fs/promises");
 const path = require("path");
-
 const pool = require("../db");
 
-// Locate the shared database folder
-const DATABASE_DIR = path.join(
-    __dirname,
-    "../../database"
-);
+const DATABASE_DIR = path.join(__dirname, "../../database");
 
-// Execute a trusted SQL script in a transaction
-async function executeScript(filename) {
-    const filePath = path.join(DATABASE_DIR, filename);
+// Only our application's tables are included here.
+// Order matters for dropping tables with foreign keys.
+const DROP_TABLES_SQL = `
+    DROP TABLE IF EXISTS
+        public.purchase_item,
+        public.purchase,
+        public.inventory,
+        bank.bank_account,
+        public.aisle,
+        public.product,
+        public.store,
+        public.customer,
+        public.state_tax
+    CASCADE;
+`;
 
-    const sql = await fs.readFile(filePath, "utf8");
+// Used by Seed and Reset.
+// TRUNCATE clears data but preserves table definitions.
+const CLEAR_DATA_SQL = `
+    TRUNCATE TABLE
+        public.purchase_item,
+        public.purchase,
+        public.inventory,
+        bank.bank_account,
+        public.aisle,
+        public.product,
+        public.store,
+        public.customer,
+        public.state_tax
+    RESTART IDENTITY CASCADE;
+`;
 
-    const client = await pool.connect();
-
-    try {
-        await client.query("BEGIN");
-
-        await client.query(sql);
-
-        await client.query("COMMIT");
-    } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-    } finally {
-        client.release();
-    }
+async function readScript(filename) {
+    return fs.readFile(
+        path.join(DATABASE_DIR, filename),
+        "utf8"
+    );
 }
 
 // POST /api/db/init
 router.post("/init", async (req, res) => {
+    let client;
+
     try {
-        await executeScript("schema.sql");
+        const schemaSQL = await readScript("schema.sql");
+
+        client = await pool.connect();
+        await client.query("BEGIN");
+
+        // Remove existing application tables.
+        await client.query(DROP_TABLES_SQL);
+
+        // schema.sql currently uses CREATE SCHEMA bank,
+        // so remove the now-empty bank schema as well.
+        // This intentionally does NOT use CASCADE.
+        await client.query("DROP SCHEMA IF EXISTS bank");
+
+        // Recreate tables and foreign keys.
+        await client.query(schemaSQL);
+
+        await client.query("COMMIT");
 
         res.json({
             success: true,
-            message: "Database tables created successfully"
+            message: "Database tables recreated successfully"
         });
 
     } catch (error) {
-        console.error("Initialization error:", error);
+        if (client) {
+            await client.query("ROLLBACK").catch(console.error);
+        }
+
+        console.error("Database init error:", error);
 
         res.status(500).json({
             success: false,
             message: "Database initialization failed"
         });
+
+    } finally {
+        if (client) client.release();
     }
 });
 
 // POST /api/db/seed
 router.post("/seed", async (req, res) => {
+    let client;
+
     try {
-        await executeScript("seed.sql");
+        const seedSQL = await readScript("seed.sql");
+
+        client = await pool.connect();
+        await client.query("BEGIN");
+
+        // Clear old data and reset generated IDs.
+        await client.query(CLEAR_DATA_SQL);
+
+        // Populate with the original sample records.
+        await client.query(seedSQL);
+
+        await client.query("COMMIT");
 
         res.json({
             success: true,
-            message: "Database seeded successfully"
+            message: "Database cleared and seeded successfully"
         });
 
     } catch (error) {
-        console.error("Seeding error:", error);
+        if (client) {
+            await client.query("ROLLBACK").catch(console.error);
+        }
+
+        console.error("Database seed error:", error);
 
         res.status(500).json({
             success: false,
             message: "Database seeding failed"
         });
+
+    } finally {
+        if (client) client.release();
     }
 });
 
@@ -84,24 +141,13 @@ router.post("/reset", async (req, res) => {
         });
     }
 
-    const client = await pool.connect();
+    let client;
 
     try {
+        client = await pool.connect();
         await client.query("BEGIN");
 
-        await client.query(`
-            TRUNCATE TABLE
-                public.purchase_item,
-                public.purchase,
-                public.inventory,
-                bank.bank_account,
-                public.customer,
-                public.product,
-                public.aisle,
-                public.store,
-                public.state_tax
-            RESTART IDENTITY CASCADE
-        `);
+        await client.query(CLEAR_DATA_SQL);
 
         await client.query("COMMIT");
 
@@ -111,9 +157,11 @@ router.post("/reset", async (req, res) => {
         });
 
     } catch (error) {
-        await client.query("ROLLBACK");
+        if (client) {
+            await client.query("ROLLBACK").catch(console.error);
+        }
 
-        console.error("Reset error:", error);
+        console.error("Database reset error:", error);
 
         res.status(500).json({
             success: false,
@@ -121,7 +169,7 @@ router.post("/reset", async (req, res) => {
         });
 
     } finally {
-        client.release();
+        if (client) client.release();
     }
 });
 
