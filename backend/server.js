@@ -11,6 +11,7 @@ const adminRoutes = require("./routes/admin");
 const tableRoutes = require("./routes/tables");
 const simulationRoutes = require("./routes/simulation");
 const checkoutRoutes = require("./routes/checkout");
+const transactionRoutes = require("./routes/transactions");
 
 // create app that handles http req's
 const app = express();
@@ -63,6 +64,7 @@ app.use("/api/db", adminRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/simulation", simulationRoutes);
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/transactions", transactionRoutes);
 
 app.listen(PORT, () => {
 	console.log(`Server running at http://localhost:${PORT}`);
